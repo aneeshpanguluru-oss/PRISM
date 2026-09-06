@@ -9,6 +9,7 @@ function App() {
   const [report, setReport] = useState(null);
   const [error, setError] = useState("");
   const [scenario, setScenario] = useState("healthy");
+  const [mode, setMode] = useState("simulated");
   const [replay, setReplay] = useState(null);
   const [replayStep, setReplayStep] = useState(0);
   const [replaying, setReplaying] = useState(false);
@@ -68,7 +69,9 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/investigate/simulated",
+        mode === "real"
+          ? "http://127.0.0.1:8000/investigate"
+          : "http://127.0.0.1:8000/investigate/simulated",
         {
           method: "POST",
           headers: {
@@ -76,26 +79,28 @@ function App() {
           },
           body: JSON.stringify({
             target: target.trim(),
-            failure: scenario === "healthy" ? null : scenario,
+            ...(mode === "simulated" && {
+              failure: scenario === "healthy" ? null : scenario,
+            }),
           }),
         }
       );
 
       if (!response.ok) {
         throw new Error(
-          `Backend returned HTTP ${response.status}`
-        );
-      }
+            `Backend returned HTTP ${response.status}`
+          );
+        }
 
-      const data = await response.json();
-      setReport(data);
-    } catch (err) {
-      console.error("Investigation error:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+          const data = await response.json();
+          setReport(data);
+        } catch (err) {
+          console.error("Investigation error:", err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
 
 const startReplay = async () => {
   if (!report) return;
@@ -185,6 +190,13 @@ const startReplay = async () => {
                 }
               }}
             />
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+            >
+              <option value="simulated">SIMULATED</option>
+              <option value="real">REAL SYSTEM</option>
+            </select>
 
             <select
               value={scenario}

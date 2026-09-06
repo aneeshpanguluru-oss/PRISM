@@ -4,6 +4,7 @@ from simulator.diagnostics import (
     simulate_http,
     simulate_database,
 )
+from backend.diagnostics.database import check_database
 from simulator.system import simulate_system
 from backend.diagnostics.dns import run_dns_lookup
 from backend.diagnostics.ping import run_ping
@@ -92,16 +93,23 @@ class Investigator:
                         scores["db_lock_contention"] *= 3.0
                         scores["db_connection_exhaustion"] *= 2.0
 
-        # Database evidence
+                # Database evidence
         if database:
             if not database.success:
                 lock_wait = database.metrics.get("lock_wait_ms", 0)
                 waiting_transactions = database.metrics.get(
                     "waiting_transactions", 0
                 )
+                lock_contention = database.metrics.get(
+                    "lock_contention", False
+                )
                 pool_usage = database.metrics.get(
                     "connection_pool_usage_percent", 0
                 )
+
+                # Real PostgreSQL lock evidence
+                if lock_contention:
+                    scores["db_lock_contention"] *= 10.0
 
                 if lock_wait > 500:
                     scores["db_lock_contention"] *= 8.0
@@ -109,6 +117,7 @@ class Investigator:
                 if waiting_transactions > 0:
                     scores["db_lock_contention"] *= 4.0
 
+                # Simulator-specific connection pool evidence
                 if pool_usage > 90:
                     scores["db_connection_exhaustion"] *= 4.0
                     scores["db_lock_contention"] *= 2.0
@@ -161,15 +170,28 @@ class Investigator:
 
             lock_wait = metrics.get("lock_wait_ms")
             waiting_transactions = metrics.get("waiting_transactions")
-            pool_usage = metrics.get("connection_pool_usage_percent")
 
-            reasoning = (
-                f"Database lock contention caused transactions to wait "
-                f"({waiting_transactions} waiting transactions, "
-                f"{lock_wait} ms lock wait). "
-                f"This increased connection pool usage to {pool_usage}%, "
-                f"contributing to increased application latency."
+            pool_usage = metrics.get(
+                "connection_pool_usage_percent"
             )
+
+            if pool_usage is not None:
+                reasoning = (
+                    f"Database lock contention caused transactions to wait "
+                    f"({waiting_transactions} waiting transactions, "
+                    f"{lock_wait} ms lock wait). "
+                    f"This increased connection pool usage to "
+                    f"{pool_usage}%, contributing to increased "
+                    f"application latency."
+                )
+            else:
+                reasoning = (
+                    f"PostgreSQL reported active lock contention with "
+                    f"{waiting_transactions} waiting transaction(s) and "
+                    f"{lock_wait} ms lock wait. "
+                    f"The database contention is the strongest observed "
+                    f"explanation for the failure."
+                )
 
         return InvestigationReport(
             target=target,
@@ -401,7 +423,8 @@ class Investigator:
 
             elif next_test == "http":
                 result = run_http_check(target)
-
+            elif next_test == "database":
+                result = check_database(target)
             else:
                 break
 

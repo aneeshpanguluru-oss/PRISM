@@ -8,7 +8,10 @@ def run_http_check(url: str) -> DiagnosticResult:
     """Check HTTP/HTTPS availability and return a structured result."""
 
     if not url.startswith(("http://", "https://")):
-        url = "https://" + url
+        if url in ("localhost", "127.0.0.1"):
+            url = "http://" + url
+        else:
+            url = "https://" + url
 
     start_time = time.perf_counter()
 
