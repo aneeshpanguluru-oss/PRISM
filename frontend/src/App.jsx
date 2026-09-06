@@ -88,59 +88,59 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-            `Backend returned HTTP ${response.status}`
-          );
-        }
-
-          const data = await response.json();
-          setReport(data);
-        } catch (err) {
-          console.error("Investigation error:", err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-const startReplay = async () => {
-  if (!report) return;
-
-  setReplaying(true);
-  setReplay(null);
-  setReplayStep(0);
-
-  try {
-    const response = await fetch(
-      "http://127.0.0.1:8000/replay/simulated",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          target: report.target,
-          failure: scenario === "healthy" ? null : scenario,
-        }),
+          `Backend returned HTTP ${response.status}`
+        );
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(
-        `Replay backend returned HTTP ${response.status}`
-      );
+      const data = await response.json();
+      setReport(data);
+    } catch (err) {
+      console.error("Investigation error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const data = await response.json();
+  const startReplay = async () => {
+    if (!report) return;
 
-    setReplay(data);
+    setReplaying(true);
+    setReplay(null);
     setReplayStep(0);
-  } catch (err) {
-    console.error("Replay error:", err);
-    setError(err.message);
-  } finally {
-    setReplaying(false);
-  }
-};
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/replay/simulated",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            target: report.target,
+            failure: scenario === "healthy" ? null : scenario,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Replay backend returned HTTP ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      setReplay(data);
+      setReplayStep(0);
+    } catch (err) {
+      console.error("Replay error:", err);
+      setError(err.message);
+    } finally {
+      setReplaying(false);
+    }
+  };
 
   if (showReplay) {
     return (
@@ -152,9 +152,9 @@ const startReplay = async () => {
       />
     );
   }
+
   return (
     <div className="app">
-
       <header className="header">
         <div>
           <h1>PRISM</h1>
@@ -168,9 +168,7 @@ const startReplay = async () => {
       </header>
 
       <main className="main">
-
         <section className="hero">
-
           <h2>Investigate a Network Target</h2>
 
           <p>
@@ -179,7 +177,6 @@ const startReplay = async () => {
           </p>
 
           <div className="target-box">
-
             <input
               value={target}
               onChange={(e) => setTarget(e.target.value)}
@@ -190,6 +187,7 @@ const startReplay = async () => {
                 }
               }}
             />
+
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value)}
@@ -214,7 +212,7 @@ const startReplay = async () => {
                 High Latency
               </option>
               <option value="db_lock_contention">
-                  DB Lock Contention
+                DB Lock Contention
               </option>
             </select>
 
@@ -226,7 +224,6 @@ const startReplay = async () => {
                 ? "Investigating..."
                 : "Start Investigation"}
             </button>
-
           </div>
 
           {error && (
@@ -239,14 +236,11 @@ const startReplay = async () => {
               {error}
             </p>
           )}
-
         </section>
 
         <section className="dashboard">
-
           {/* LEFT COLUMN */}
           <div className="card">
-
             <h3>Investigation</h3>
 
             {!report && !loading && (
@@ -275,22 +269,47 @@ const startReplay = async () => {
 
             {report && (
               <div className="result-panel">
+              {/* FINAL DIAGNOSIS */}
+              <div className="diagnosis-box">
+                <span className="result-label">
+                  FINAL DIAGNOSIS
+                </span>
 
-                {/* FINAL DIAGNOSIS */}
-                <div className="diagnosis-box">
+                <h4>
+                  {report.final_diagnosis.replaceAll("_", " ")}
+                </h4>
 
+                <p>{report.reasoning}</p>
+
+                <div className="diagnosis-chain">
                   <span className="result-label">
-                    FINAL DIAGNOSIS
+                    CAUSAL CHAIN
                   </span>
 
-                  <h4>
-                    {report.final_diagnosis.replaceAll(
-                      "_",
-                      " "
-                    )}
-                  </h4>
+                  <div className="chain">
+                    <span className="chain-node">TARGET</span>
 
-                  <p>{report.reasoning}</p>
+                    <span className="chain-arrow">→</span>
+
+                    <span className="chain-node">NETWORK</span>
+
+                    <span className="chain-arrow">→</span>
+
+                    <span className="chain-node">APPLICATION</span>
+
+                    <span className="chain-arrow">→</span>
+
+                    <span className="chain-node">DATABASE</span>
+
+                    <span className="chain-arrow">→</span>
+
+                    <span className="chain-node final">
+                      {report.final_diagnosis.replaceAll("_", " ")}
+                    </span>
+                  </div>
+                </div>
+
+                {mode === "simulated" && (
                   <button
                     className="replay-button"
                     onClick={async () => {
@@ -299,21 +318,21 @@ const startReplay = async () => {
                     }}
                     disabled={replaying}
                   >
-                    {replaying ? "Preparing Replay..." : "Replay Failure"}
+                    {replaying
+                      ? "Preparing Replay..."
+                      : "Replay Failure"}
                   </button>
+                )}
               </div>
 
                 {/* TARGET + TEST SEQUENCE */}
                 <div className="result-row">
-
                   <div>
                     <span className="result-label">
                       TARGET
                     </span>
 
-                    <strong>
-                      {report.target}
-                    </strong>
+                    <strong>{report.target}</strong>
                   </div>
 
                   <div>
@@ -325,12 +344,10 @@ const startReplay = async () => {
                       {report.tests_executed.join(" → ")}
                     </strong>
                   </div>
-
                 </div>
 
                 {/* EVIDENCE */}
                 <div className="evidence-section">
-
                   <span className="result-label">
                     EVIDENCE
                   </span>
@@ -340,9 +357,7 @@ const startReplay = async () => {
                       className="evidence-card"
                       key={result.diagnostic}
                     >
-
                       <div className="evidence-header">
-
                         <strong>
                           {result.diagnostic.toUpperCase()}
                         </strong>
@@ -358,15 +373,12 @@ const startReplay = async () => {
                             ? "PASSED"
                             : "FAILED"}
                         </span>
-
                       </div>
 
                       <div className="evidence-metrics">
-
                         {Object.entries(result.metrics).map(
                           ([key, value]) => (
                             <div key={key}>
-
                               <span>
                                 {key.replaceAll(
                                   "_",
@@ -379,19 +391,17 @@ const startReplay = async () => {
                                   ? value.join(", ")
                                   : String(value)}
                               </strong>
-
                             </div>
                           )
                         )}
-
                       </div>
-
                     </div>
                   ))}
-
                 </div>
-                <div className="failure-path">
 
+                {/* FAILURE PATH */}
+                <div className="failure-path">
+                  {/* TARGET */}
                   <div className="path-node">
                     <div className="path-icon">T</div>
                     <strong>TARGET</strong>
@@ -400,6 +410,7 @@ const startReplay = async () => {
 
                   <div className="path-line"></div>
 
+                  {/* DNS */}
                   <div
                     className={`path-node ${
                       report.tests_executed.includes("dns")
@@ -413,6 +424,7 @@ const startReplay = async () => {
                   >
                     <div className="path-icon">D</div>
                     <strong>DNS</strong>
+
                     <span>
                       {report.tests_executed.includes("dns")
                         ? report.evidence.find(
@@ -426,40 +438,7 @@ const startReplay = async () => {
 
                   <div className="path-line"></div>
 
-                  <div
-                    className={`path-node ${
-                      !report.tests_executed.includes("ping")
-                        ? "skipped"
-                        : report.evidence.find(
-                            (e) => e.diagnostic === "ping"
-                          )?.success
-                          ? report.evidence.find(
-                              (e) => e.diagnostic === "ping"
-                            )?.metrics?.average_latency_ms > 200
-                            ? "warning"
-                            : "success"
-                          : "failure"
-                    }`}
-                  >
-                    <div className="path-icon">N</div>
-                    <strong>NETWORK</strong>
-                    <span>
-                      {!report.tests_executed.includes("ping")
-                        ? "NOT TESTED"
-                        : report.evidence.find(
-                            (e) => e.diagnostic === "ping"
-                          )?.metrics?.average_latency_ms > 200
-                        ? "HIGH LATENCY"
-                        : report.evidence.find(
-                            (e) => e.diagnostic === "ping"
-                          )?.success
-                        ? "HEALTHY"
-                        : "FAILED"}
-                    </span>
-                  </div>
-
-                  <div className="path-line"></div>
-
+                  {/* HTTP */}
                   <div
                     className={`path-node ${
                       !report.tests_executed.includes("http")
@@ -473,120 +452,152 @@ const startReplay = async () => {
                   >
                     <div className="path-icon">H</div>
                     <strong>HTTP</strong>
+
                     <span>
                       {!report.tests_executed.includes("http")
-                        ? "SKIPPED"
+                        ? "NOT TESTED"
                         : report.evidence.find(
                             (e) => e.diagnostic === "http"
                           )?.success
-                        ? "HEALTHY"
-                        : "FAILED"}
+                          ? "HEALTHY"
+                          : "FAILED"}
                     </span>
                   </div>
 
-                </div>
-                {/* INVESTIGATION TIMELINE */}
-                  <div className="timeline-section">
+                  <div className="path-line"></div>
 
-                    <span className="result-label">
-                      INVESTIGATION TIMELINE
+                  {/* DATABASE */}
+                  <div
+                    className={`path-node ${
+                      !report.tests_executed.includes(
+                        "database"
+                      )
+                        ? "skipped"
+                        : report.evidence.find(
+                            (e) =>
+                              e.diagnostic ===
+                              "database"
+                          )?.success
+                          ? "success"
+                          : "failure"
+                    }`}
+                  >
+                    <div className="path-icon">DB</div>
+                    <strong>DATABASE</strong>
+
+                    <span>
+                      {!report.tests_executed.includes(
+                        "database"
+                      )
+                        ? "NOT TESTED"
+                        : report.evidence.find(
+                            (e) =>
+                              e.diagnostic ===
+                              "database"
+                          )?.success
+                          ? "HEALTHY"
+                          : report.evidence.find(
+                              (e) =>
+                                e.diagnostic ===
+                                "database"
+                            )?.metrics
+                                ?.lock_contention
+                          ? "LOCK CONTENTION"
+                          : "FAILED"}
                     </span>
+                  </div>
+                </div>
 
-                    <div className="timeline">
+                {/* INVESTIGATION TIMELINE */}
+                <div className="timeline-section">
+                  <span className="result-label">
+                    INVESTIGATION TIMELINE
+                  </span>
 
-                      {report.tests_executed.map((test, index) => {
-                        const status = getTimelineStatus(test);
+                  <div className="timeline">
+                    {report.tests_executed.map(
+                      (test, index) => {
+                        const status =
+                          getTimelineStatus(test);
 
                         return (
                           <div
                             className={`timeline-item ${status.type}`}
                             key={test}
                           >
-
                             <div className="timeline-marker">
                               {status.type === "failure"
                                 ? "!"
-                                : status.type === "warning"
+                                : status.type ===
+                                  "warning"
                                 ? "!"
                                 : index + 1}
                             </div>
 
                             <div className="timeline-content">
-
                               <strong>
                                 {test.toUpperCase()}
                               </strong>
 
-                              <span className={`timeline-status ${status.type}`}>
+                              <span
+                                className={`timeline-status ${status.type}`}
+                              >
                                 {status.label}
                               </span>
 
                               <span className="timeline-detail">
                                 {status.detail}
                               </span>
-
                             </div>
-
                           </div>
                         );
-                      })}
+                      }
+                    )}
 
-                      <div className="timeline-item final">
-
-                        <div className="timeline-marker">
-                          ✓
-                        </div>
-
-                        <div className="timeline-content">
-
-                          <strong>
-                            FAILURE LOCALIZED
-                          </strong>
-
-                          <span className="timeline-diagnosis">
-                            {report.final_diagnosis.replaceAll(
-                              "_",
-                              " "
-                            )}
-                          </span>
-
-                        </div>
-
+                    <div className="timeline-item final">
+                      <div className="timeline-marker">
+                        ✓
                       </div>
 
-                    </div>
+                      <div className="timeline-content">
+                        <strong>
+                          FAILURE LOCALIZED
+                        </strong>
 
+                        <span className="timeline-diagnosis">
+                          {report.final_diagnosis.replaceAll(
+                            "_",
+                            " "
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                </div>
 
                 {/* INVESTIGATION TRACE */}
                 <div className="trace-section">
-
                   <span className="result-label">
                     INVESTIGATION TRACE
                   </span>
 
                   {report.investigation_trace.map(
                     (trace) => (
-
                       <div
                         className="trace-step"
                         key={trace.step}
                       >
-
                         <div className="trace-header">
-
                           <div className="trace-step-number">
                             STEP {trace.step}
                           </div>
 
                           <div className="trace-selected">
-                            Selected:
-
+                            Selected:{" "}
                             <strong>
                               {trace.selected_test.toUpperCase()}
                             </strong>
                           </div>
-
                         </div>
 
                         <div className="trace-reason">
@@ -594,76 +605,59 @@ const startReplay = async () => {
                         </div>
 
                         <div className="trace-tests">
-
                           {Object.entries(
                             trace.available_tests
                           ).map(
                             ([test, score]) => (
-
                               <div
                                 className={
-                                  test === trace.selected_test
+                                  test ===
+                                  trace.selected_test
                                     ? "trace-test selected"
                                     : "trace-test"
                                 }
                                 key={test}
                               >
-
                                 <span>
                                   {test.toUpperCase()}
                                 </span>
 
                                 <div className="trace-test-details">
-
                                   <strong>
                                     {score.toFixed(2)}
                                   </strong>
 
                                   <span>
                                     Cost:{" "}
-                                    {trace.test_costs?.[test] ?? "-"}
+                                    {trace.test_costs?.[
+                                      test
+                                    ] ?? "-"}
                                   </span>
-
                                 </div>
-
                               </div>
-
                             )
                           )}
-
                         </div>
-
                       </div>
-
                     )
                   )}
-
                 </div>
-
-          </div>
-          )}
-
+              </div>
+            )}
           </div>
 
           {/* RIGHT COLUMN */}
           <div className="card">
-
             <h3>Current Hypotheses</h3>
 
             {report ? (
-
               report.hypotheses.map((hypothesis) => (
-
                 <div
                   className="hypothesis"
                   key={hypothesis.name}
                 >
-
                   <div>
-
-                    <span>
-                      {hypothesis.name}
-                    </span>
+                    <span>{hypothesis.name}</span>
 
                     <strong>
                       {Math.round(
@@ -671,11 +665,9 @@ const startReplay = async () => {
                       )}
                       %
                     </strong>
-
                   </div>
 
                   <div className="bar">
-
                     <div
                       className="fill"
                       style={{
@@ -684,17 +676,11 @@ const startReplay = async () => {
                         }%`,
                       }}
                     ></div>
-
                   </div>
-
                 </div>
-
               ))
-
             ) : (
-
               <>
-
                 {[
                   ["DNS Failure", 20],
                   ["Network Connectivity", 20],
@@ -702,47 +688,33 @@ const startReplay = async () => {
                   ["Service / HTTP Failure", 20],
                   ["Healthy", 20],
                 ].map(([name, confidence]) => (
-
                   <div
                     className="hypothesis"
                     key={name}
                   >
-
                     <div>
-
                       <span>{name}</span>
 
                       <strong>
                         {confidence}%
                       </strong>
-
                     </div>
 
                     <div className="bar">
-
                       <div
                         className="fill"
                         style={{
                           width: `${confidence}%`,
                         }}
                       ></div>
-
                     </div>
-
                   </div>
-
                 ))}
-
               </>
-
             )}
-
           </div>
-
         </section>
-
       </main>
-
     </div>
   );
 }
