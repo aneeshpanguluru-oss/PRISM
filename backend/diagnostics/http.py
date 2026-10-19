@@ -24,16 +24,34 @@ def run_http_check(url: str) -> DiagnosticResult:
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000
 
+        status_code = response.status_code
+
+        if 200 <= status_code < 400:
+            success = True
+            error = None
+
+        elif 400 <= status_code < 500:
+            success = False
+            error = f"HTTP {status_code} - Client or access error"
+
+        elif 500 <= status_code < 600:
+            success = False
+            error = f"HTTP {status_code} - Server error"
+
+        else:
+            success = False
+            error = f"HTTP {status_code}"
+
         return DiagnosticResult(
             diagnostic="http",
             target=url,
-            success=response.ok,
+            success=success,
             metrics={
-                "status_code": response.status_code,
+                "status_code": status_code,
                 "response_time_ms": round(elapsed_ms, 2),
                 "final_url": response.url
             },
-            error=None if response.ok else f"HTTP {response.status_code}"
+            error=error
         )
 
     except requests.exceptions.Timeout:

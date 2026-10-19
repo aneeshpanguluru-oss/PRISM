@@ -23,26 +23,121 @@ function ReplayPage({
 
   const currentState = replay.timeline[replayStep];
 
-  const status = [
-    {
-      title: "HEALTHY",
-      description: "System operating normally.",
-    },
-    {
-      title: "DEGRADED",
-      description: "Database lock contention begins.",
-    },
-    {
-      title: "CRITICAL",
-      description:
-        "Waiting transactions increase connection pressure.",
-    },
-    {
-      title: "FAILURE",
-      description:
-        "Connection pool saturation drives severe application latency.",
-    },
-  ][replayStep];
+  const replayMessages = {
+    dns_failure: [
+      {
+        title: "HEALTHY",
+        description: "System operating normally.",
+      },
+      {
+        title: "DEGRADED",
+        description: "DNS resolution begins to degrade.",
+      },
+      {
+        title: "CRITICAL",
+        description:
+          "DNS failures increase, delaying request resolution.",
+      },
+      {
+        title: "FAILURE",
+        description:
+          "DNS resolution failure prevents requests from reaching the service.",
+      },
+    ],
+
+    network_failure: [
+      {
+        title: "HEALTHY",
+        description: "System operating normally.",
+      },
+      {
+        title: "DEGRADED",
+        description: "Network connectivity begins to degrade.",
+      },
+      {
+        title: "CRITICAL",
+        description:
+          "Packet loss and connection failures increase request latency.",
+      },
+      {
+        title: "FAILURE",
+        description:
+          "Severe network degradation causes widespread request failures.",
+      },
+    ],
+
+    http_failure: [
+      {
+        title: "HEALTHY",
+        description: "System operating normally.",
+      },
+      {
+        title: "DEGRADED",
+        description: "HTTP service responses begin to degrade.",
+      },
+      {
+        title: "CRITICAL",
+        description:
+          "Application requests experience increasing service failures.",
+      },
+      {
+        title: "FAILURE",
+        description:
+          "The HTTP service becomes unavailable to incoming requests.",
+      },
+    ],
+
+    high_latency: [
+      {
+        title: "HEALTHY",
+        description: "System operating normally.",
+      },
+      {
+        title: "DEGRADED",
+        description: "Request latency begins to increase.",
+      },
+      {
+        title: "CRITICAL",
+        description:
+          "Slow responses accumulate and increase system pressure.",
+      },
+      {
+        title: "FAILURE",
+        description:
+          "Severe latency makes the application effectively unresponsive.",
+      },
+    ],
+
+    db_lock_contention: [
+      {
+        title: "HEALTHY",
+        description: "System operating normally.",
+      },
+      {
+        title: "DEGRADED",
+        description: "Database lock contention begins.",
+      },
+      {
+        title: "CRITICAL",
+        description:
+          "Waiting transactions increase connection pressure.",
+      },
+      {
+        title: "FAILURE",
+        description:
+          "Connection pool saturation drives severe application latency.",
+      },
+    ],
+  };
+
+  const messages =
+    replayMessages[replay.failure] ||
+    replayMessages.db_lock_contention;
+
+  const status =
+    messages[
+      Math.min(replayStep, messages.length - 1)
+    ];
 
   return (
     <div className="app">
@@ -159,7 +254,10 @@ function ReplayPage({
               <button
                 onClick={() =>
                   setReplayStep(
-                    Math.max(0, replayStep - 1)
+                    Math.max(
+                      0,
+                      replayStep - 1
+                    )
                   )
                 }
                 disabled={replayStep === 0}

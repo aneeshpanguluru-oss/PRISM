@@ -196,25 +196,27 @@ function App() {
               <option value="real">REAL SYSTEM</option>
             </select>
 
-            <select
-              value={scenario}
-              onChange={(e) => setScenario(e.target.value)}
-            >
-              <option value="healthy">Healthy</option>
-              <option value="dns_failure">DNS Failure</option>
-              <option value="network_failure">
-                Network Failure
-              </option>
-              <option value="http_failure">
-                HTTP Failure
-              </option>
-              <option value="high_latency">
-                High Latency
-              </option>
-              <option value="db_lock_contention">
-                DB Lock Contention
-              </option>
-            </select>
+            {mode === "simulated" && (
+              <select
+                value={scenario}
+                onChange={(e) => setScenario(e.target.value)}
+              >
+                <option value="healthy">Healthy</option>
+                <option value="dns_failure">DNS Failure</option>
+                <option value="network_failure">
+                  Network Failure
+                </option>
+                <option value="http_failure">
+                  HTTP Failure
+                </option>
+                <option value="high_latency">
+                  High Latency
+                </option>
+                <option value="db_lock_contention">
+                  DB Lock Contention
+                </option>
+              </select>
+            )}
 
             <button
               onClick={startInvestigation}
